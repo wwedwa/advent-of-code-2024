@@ -46,12 +46,10 @@ int PartTwo(std::vector<int>& col_one, std::vector<int>& col_two) {
   auto it = std::unique(col_one.begin(), col_one.end());
   col_one.erase(it, col_one.end());
 
-  // Index keeping track of elemnt under inspection in the first column
+  // Index keeping track of element under inspection in the second column
   int j = 0;
-  // Count to keep track of how many times col_one[j] appears in col_two
+  // Count to keep track of how many times elem in col_one appears in col_two
   int count = 0;
-  // Lag for index over col_two. When j progresses, we do not want i to progress
-  int lag = 0;
 
   for (int i = 0; i < col_one.size() && j < col_two.size(); ++i) {
     while (col_one[i] >= col_two[j] && j < col_two.size()) {
@@ -64,17 +62,6 @@ int PartTwo(std::vector<int>& col_one, std::vector<int>& col_two) {
       count = 0;
     }
   }
-
-  // for (int i = 0; i - lag < col_two.size() && j < col_one.size(); ++i) {
-  //   if (col_two[i - lag] == col_one[j]) {
-  //     ++count;
-  //   } else if (col_two[i - lag] > col_one[j]) {
-  //     answer += num_appearances[col_one[j]] * count * col_one[j];
-  //     count = 0;
-  //     ++lag;
-  //     ++j;
-  //   }
-  // }
   return answer;
 }
 
