@@ -53,16 +53,28 @@ int PartTwo(std::vector<int>& col_one, std::vector<int>& col_two) {
   // Lag for index over col_two. When j progresses, we do not want i to progress
   int lag = 0;
 
-  for (int i = 0; i - lag < col_two.size() && j < col_one.size(); ++i) {
-    if (col_two[i - lag] == col_one[j]) {
-      ++count;
-    } else if (col_two[i - lag] > col_one[j]) {
-      answer += num_appearances[col_one[j]] * count * col_one[j];
-      count = 0;
-      ++lag;
+  for (int i = 0; i < col_one.size() && j < col_two.size(); ++i) {
+    while (col_one[i] >= col_two[j] && j < col_two.size()) {
+      // 1 if the elements in the columns are equal. 0 otherwise
+      count += (col_one[i] == col_two[j]);
       ++j;
     }
+    if (col_one[i] < col_two[j]) {
+      answer += num_appearances[col_one[i]] * count * col_one[i];
+      count = 0;
+    }
   }
+
+  // for (int i = 0; i - lag < col_two.size() && j < col_one.size(); ++i) {
+  //   if (col_two[i - lag] == col_one[j]) {
+  //     ++count;
+  //   } else if (col_two[i - lag] > col_one[j]) {
+  //     answer += num_appearances[col_one[j]] * count * col_one[j];
+  //     count = 0;
+  //     ++lag;
+  //     ++j;
+  //   }
+  // }
   return answer;
 }
 
