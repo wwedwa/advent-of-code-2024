@@ -2,7 +2,7 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall
 
 # List of source files
-FILE = day_1
+FILE = 1_day
 ifdef NAME
     FILE = $(NAME)
 endif

@@ -2,7 +2,7 @@
 
 namespace aoc {
   
-vector<string> split(std::string line,
+std::vector<std::string> split(std::string line,
                     std::string delim,
                     bool include_empty_lines,
                     bool remove_leading_space) {
@@ -39,7 +39,7 @@ bool IsInt(std::string str) {
   return true;
 }
 
-vector<int> GetInts(std::vector<std::string> strings) {
+std::vector<int> GetInts(std::vector<std::string> strings) {
   std::vector<int> ints;
   for (std::string s : strings) {
     if (IsInt(s)) {
@@ -49,7 +49,7 @@ vector<int> GetInts(std::vector<std::string> strings) {
   return ints;
 }
 
-vector<long> GetLongs(std::vector<std::string> strings) {
+std::vector<long> GetLongs(std::vector<std::string> strings) {
   std::vector<long> longs;
   for (std::string s : strings) {
     if (IsInt(s)) {
@@ -59,7 +59,7 @@ vector<long> GetLongs(std::vector<std::string> strings) {
   return longs;
 }
 
-vector<long long> GetLLongs(std::vector<std::string> strings) {
+std::vector<long long> GetLLongs(std::vector<std::string> strings) {
   std::vector<long long> longs;
   for (std::string s : strings) {
     if (IsInt(s)) {
