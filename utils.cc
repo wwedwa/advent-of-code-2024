@@ -90,7 +90,7 @@ int mod(int a, int b) {
   return a - b * (a / b);
 }
 
-std::vector<std::string> MatchRegex(std::string input, std::string pattern) {
+std::vector<std::string> FindAllRegex(std::string input, std::string pattern) {
   std::regex regex_pattern(pattern);
 
   // Create a regex iterator
@@ -100,9 +100,16 @@ std::vector<std::string> MatchRegex(std::string input, std::string pattern) {
   // Store matches in a vector
   std::vector<std::string> matches;
   for (auto it = begin; it != end; ++it) {
-      matches.push_back(it->str());
+    matches.push_back(it->str());
   }
   return matches;
+}
+
+bool ExactRegexMatch(std::string input, std::string pattern) {
+  std::regex regex_pattern(pattern);
+
+  // Check for an exact match
+  return std::regex_match(input, regex_pattern);
 }
 
 }

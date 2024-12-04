@@ -51,8 +51,10 @@ long lcm(std::vector<int> nums);
 int mod(int m, int n);
 
 // Find all instances of a regex pattern in the given string
-std::vector<std::string> MatchRegex(std::string input, std::string pattern);
+std::vector<std::string> FindAllRegex(std::string input, std::string pattern);
 
+// Returns true if the input and pattern are exact matches. Otherwise, false
+bool ExactRegexMatch(std::string input, std::string pattern);
 }
 
 #endif // UTILS_H
