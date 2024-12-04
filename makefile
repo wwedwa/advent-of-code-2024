@@ -1,11 +1,9 @@
 CXX = g++
 CXXFLAGS = -std=c++17 -Wall
 
-# List of source files
-FILE = 1_day
-ifdef NAME
-    FILE = $(NAME)
-endif
+# Set file name
+DAY ?= 1
+FILE = $(DAY)_day
 
 # Generate corresponding object file names
 OBJECTS = utils.o
