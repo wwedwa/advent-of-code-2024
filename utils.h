@@ -19,6 +19,7 @@
 #include <algorithm>
 #include <climits>
 #include <numeric>
+#include <regex>
 
 namespace aoc {
 
@@ -46,7 +47,11 @@ long gcd(long a, long b);
 // Calculate lcm for a vector of ints
 long lcm(std::vector<int> nums);
 
+// Calculate a special mod
 int mod(int m, int n);
+
+// Find all instances of a regex pattern in the given string
+std::vector<std::string> MatchRegex(std::string input, std::string pattern);
 
 }
 

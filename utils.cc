@@ -7,6 +7,7 @@ std::vector<std::string> split(std::string line,
                     bool include_empty_lines,
                     bool remove_leading_space) {
   std::vector<std::string> parsed_line;
+  // Continue iterating over string as long as a delimeter exists
   while (line.find(delim) != std::string::npos) {
     std::string sub_line = line.substr(0, line.find(delim));
     if (remove_leading_space) {
@@ -14,11 +15,13 @@ std::vector<std::string> split(std::string line,
         sub_line = sub_line.substr(1);
       }
     }
+    // Only save empty lines if the include_empty_lines flag is set to true
     if (sub_line != "" || include_empty_lines) {
       parsed_line.push_back(sub_line);
     }
     line = line.substr(line.find(delim) + delim.length());
   }
+  // Once we have gone through all delimeters, process the final string
   if (remove_leading_space) {
     while (line.length() > 0 && (line[0] == ' ' || line[0] == '\t')) {
       line = line.substr(1);
@@ -85,6 +88,21 @@ long lcm(std::vector<int> nums) {
 
 int mod(int a, int b) {
   return a - b * (a / b);
+}
+
+std::vector<std::string> MatchRegex(std::string input, std::string pattern) {
+  std::regex regex_pattern(pattern);
+
+  // Create a regex iterator
+  std::sregex_iterator begin(input.begin(), input.end(), regex_pattern);
+  std::sregex_iterator end;
+
+  // Store matches in a vector
+  std::vector<std::string> matches;
+  for (auto it = begin; it != end; ++it) {
+      matches.push_back(it->str());
+  }
+  return matches;
 }
 
 }
