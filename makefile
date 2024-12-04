@@ -3,7 +3,7 @@ CXXFLAGS = -std=c++17 -Wall
 
 # Set file name
 DAY ?= 1
-FILE = $(DAY)_day
+FILE = day_$(DAY)
 
 # Generate corresponding object file names
 OBJECTS = utils.o
