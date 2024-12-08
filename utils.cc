@@ -42,9 +42,9 @@ bool IsInt(std::string str) {
   return true;
 }
 
-std::vector<int> GetInts(std::vector<std::string> strings) {
+std::vector<int> GetInts(const std::vector<std::string>& strings) {
   std::vector<int> ints;
-  for (std::string s : strings) {
+  for (const std::string& s : strings) {
     if (IsInt(s)) {
       ints.push_back(stoi(s));
     }
@@ -52,9 +52,9 @@ std::vector<int> GetInts(std::vector<std::string> strings) {
   return ints;
 }
 
-std::vector<long> GetLongs(std::vector<std::string> strings) {
+std::vector<long> GetLongs(const std::vector<std::string>& strings) {
   std::vector<long> longs;
-  for (std::string s : strings) {
+  for (const std::string& s : strings) {
     if (IsInt(s)) {
       longs.push_back(stol(s));
     }
@@ -62,14 +62,24 @@ std::vector<long> GetLongs(std::vector<std::string> strings) {
   return longs;
 }
 
-std::vector<long long> GetLLongs(std::vector<std::string> strings) {
-  std::vector<long long> longs;
-  for (std::string s : strings) {
+std::vector<long long> GetLLongs(const std::vector<std::string>& strings) {
+  std::vector<long long> llongs;
+  for (const std::string& s : strings) {
     if (IsInt(s)) {
-      longs.push_back(stoll(s));
+      llongs.push_back(stoll(s));
     }
   }
-  return longs;
+  return llongs;
+}
+
+std::vector<unsigned long> GetULongs(const std::vector<std::string>& strings) {
+  std::vector<unsigned long> ulongs;
+  for (const std::string& s : strings) {
+    if (IsInt(s)) {
+      ulongs.push_back(stoul(s));
+    }
+  }
+  return ulongs;
 }
 
 long gcd(long a, long b) {

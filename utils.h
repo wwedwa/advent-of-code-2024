@@ -33,13 +33,16 @@ std::vector<std::string> split(std::string line,
 bool IsInt(std::string num);
 
 // Gets all ints from a vector of strings
-std::vector<int> GetInts(std::vector<std::string> strings);
+std::vector<int> GetInts(const std::vector<std::string>& strings);
 
 // Gets all longs from a vector of strings
-std::vector<long> GetLongs(std::vector<std::string> strings);
+std::vector<long> GetLongs(const std::vector<std::string>& strings);
 
 // Gets all long longs from a vector of strings
-std::vector<long long> GetLLongs(std::vector<std::string> strings);
+std::vector<long long> GetLLongs(const std::vector<std::string>& strings);
+
+// Gets all unsigned longs from a vector of strings
+std::vector<unsigned long> GetULongs(const std::vector<std::string>& strings);
 
 // Calculate gcd with Euclid's Algorithm
 long gcd(long a, long b);
