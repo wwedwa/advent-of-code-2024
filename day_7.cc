@@ -22,7 +22,7 @@ Infoformat GetInfo() {
 }
 
 bool IsPossible(ulong answer, std::vector<ulong> operands) {
-  // First two cases shouldn't happen, but just to make sure...
+  // First case shouldn't happen, but just to make sure...
   if (operands.empty()) {
     std::cout << "ERROR: Recursion down to 0" << std::endl;
     return false;
