@@ -112,4 +112,38 @@ bool ExactRegexMatch(std::string input, std::string pattern) {
   return std::regex_match(input, regex_pattern);
 }
 
+// ------------------ BarrierMap definitions below ----------------------
+
+bool BarrierMap::IsOutside(const Coord& coord) const {
+  return coord.first < 0 || coord.first >= length ||
+        coord.second < 0 || coord.second >= height;
+}
+
+BarrierMap::SpaceType BarrierMap::MovePlayer() {
+  Coord new_loc = {pos.first + dir.first,
+                  pos.second + dir.second};
+  if (IsOpen(new_loc)) {
+    pos = new_loc;
+    return SpaceType::kOpen;
+  }
+  
+  return IsBarrier(new_loc) ? SpaceType::kBarrier : SpaceType::kOffMap;
+}
+
+void BarrierMap::TurnRight() {
+  int new_x_vel = -dir.second;
+  int new_y_vel = dir.first;
+
+  dir.first = new_x_vel;
+  dir.second = new_y_vel;
+}
+
+void BarrierMap::TurnLeft() {
+  int new_x_vel = dir.second;
+  int new_y_vel = -dir.first;
+
+  dir.first = new_x_vel;
+  dir.second = new_y_vel;
+}
+
 }
