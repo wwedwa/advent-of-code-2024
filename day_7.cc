@@ -21,7 +21,7 @@ Infoformat GetInfo() {
   return info;
 }
 
-bool IsPossible(ulong answer, std::vector<ulong> operands) {
+bool IsPossible(const ulong& answer, const std::vector<ulong>& operands) {
   // First case shouldn't happen, but just to make sure...
   if (operands.empty()) {
     std::cout << "ERROR: Recursion down to 0" << std::endl;
@@ -45,7 +45,7 @@ bool IsPossible(ulong answer, std::vector<ulong> operands) {
   return IsPossible(answer, add_vec) || IsPossible(answer, mult_vec);
 }
 
-bool IsPossibleWithConcat(ulong answer, std::vector<ulong> operands) {
+bool IsPossibleWithConcat(const ulong& answer, const std::vector<ulong>& operands) {
   // First case shouldn't happen, but just to make sure...
   if (operands.empty()) {
     std::cout << "ERROR: Recursion down to 0" << std::endl;
