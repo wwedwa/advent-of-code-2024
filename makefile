@@ -18,7 +18,7 @@ execute : $(FILE)
 $(FILE): $(OBJECTS) $(FILE).cc
 	$(CXX) $(CXXFLAGS) $(OBJECTS) $(FILE).cc -o $(FILE)
 
-%.o: %.cc
+%.o: %.cc %.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 clean:
