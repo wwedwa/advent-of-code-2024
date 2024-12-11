@@ -66,9 +66,9 @@ bool ExactRegexMatch(std::string input, std::string pattern);
  * @brief A generic BFS algorithm that allows optional processing of the current
  * path
  * 
- * Nodes must be uniquely identifiable so that DFS can distinguish between
- * nodes that have been visited and nodes that have not. Also nodes must have
- * an ordering so that they can be placed in maps and sets
+ * Nodes must be uniquely identifiable so that BFS can distinguish between
+ * nodes that have been visited and nodes that have not. Also, NodeType must
+ * define < and == for use in std::find and sets/maps
  * 
  * @param start_node The node to start the search at
  * @param GetNeighbors A function that returns the neighbors of the current node
@@ -130,8 +130,8 @@ void BFS(
  * path
  * 
  * Nodes must be uniquely identifiable so that DFS can distinguish between
- * nodes that have been visited and nodes that have not. Also nodes must have
- * an ordering so that they can be placed in maps and sets
+ * nodes that have been visited and nodes that have not. Also, NodeType must
+ * define < and == for use in std::find and sets/maps
  * 
  * @param start_node The node to start the search at
  * @param GetNeighbors A function that returns the neighbors of the current node
