@@ -134,6 +134,46 @@ void BFS(
 }
 
 /**
+ * The recursive function called from DFS. Call DFS, not this function
+ */
+template <typename NodeType>
+void DFSRecursive(
+  const NodeType& node,
+  const std::function<std::vector<NodeType>(const NodeType&)>& GetNeighbors,
+  const std::function<void(const std::vector<NodeType>&)>& ProcessPath,
+  const std::function<bool(const std::vector<NodeType>&)>& EndCondition,
+  bool revisit_nodes,
+  bool allow_cycles,
+  int depth,
+  std::set<NodeType>& visited,
+  std::vector<NodeType>& path
+) {
+  visited.insert(node);
+  path.push_back(node);
+  ProcessPath(path);
+  if (EndCondition(path)) {
+    return;
+  }
+  for (const NodeType& neighbor : GetNeighbors(node)) {
+    bool add_node = (!visited.count(neighbor) || revisit_nodes) &&
+                    (std::find(path.begin(), path.end(), neighbor) == path.end() ||
+                    allow_cycles) &&
+                    (!allow_cycles || path.size() <= depth);
+    if (add_node) {
+      DFSRecursive(neighbor, GetNeighbors, ProcessPath, EndCondition,
+                    revisit_nodes, allow_cycles, depth, visited, path);
+    }
+  }
+  // Check this both above and below adding neighbors. The first one will
+  // trigger a cascade of all previous calls to return as well since this
+  // one is checked if a subsequent call returns.
+  if (EndCondition(path)) {
+    return;
+  }
+  path.pop_back();
+}
+
+/**
  * @brief A generic DFS algorithm that allows optional processing of the current
  * path
  * 
@@ -148,59 +188,32 @@ void BFS(
  * @param EndCondition An optional function that is called every time BFS moves 
  * to a new node. If true, the search ends. Default is to always return false.
  * It is called after ProcessNode
- * @param revisit_nodes A flag for if the DFS algorithm should ever revisit nodes.
- * Note that the algorithm will NEVER revisit nodes that are on the current path
- * to avoid cycles. However, when in a different path, it will visit already
- * visited nodes only if revisit_nodes is true. Defaults to false. This can be
- * used to walk all non-cyclic paths starting from start_node
+ * @param revisit_nodes A flag for if the DFS algorithm should ever revisit
+ * nodes that it visited in previous paths but NOT in the current path. Default
+ * is false.
+ * @param allow_cycles A flag for if DFS algorithm should allow cycles. If true,
+ * revisit_nodes is automatically set to true. Default is false.
+ * @param depth An int only used if allow_cycles is true. Will stop searching
+ * down a path when depth is reached. MUST BE SET IF ALLOWING CYCLES
  */
 template <typename NodeType>
 void DFS(
   const NodeType& start_node,
   const std::function<std::vector<NodeType>(const NodeType&)>& GetNeighbors,
-  const std::function<void(const std::vector<NodeType>&)>& ProcessPath = [](const std::vector<NodeType>&) {},
+  const std::function<void(const std::vector<NodeType>&)>& ProcessPath,
   const std::function<bool(const std::vector<NodeType>&)>& EndCondition = [](const std::vector<NodeType>&) { return false; },
-  bool revisit_nodes = false
+  bool revisit_nodes = false,
+  bool allow_cycles = false,
+  int depth = -1
 ) {
-  std::stack<NodeType> node_stack;  // Current stack of nodes to visit
-  std::set<NodeType> visited;  // Nodes that have already been visited
-  std::vector<NodeType> path;  // Current path that DFS is on
-  std::map<NodeType, int> node_depth;  // Track depth of all nodes for constructing path
-  node_stack.push(start_node);
-  path.push_back(start_node);
-  node_depth[start_node] = 0;
-
-  int curr_depth = 0;
-
-  while (!node_stack.empty()) {
-    NodeType curr_node = node_stack.top();
-    node_stack.pop();
-
-    // Update current path
-    while (curr_depth >= node_depth[curr_node]) {
-      --curr_depth;
-      path.pop_back();
-    }
-    path.push_back(curr_node);
-    curr_depth = node_depth[curr_node];  // Update current depth
-
-    ProcessPath(path);
-    visited.insert(curr_node);
-    // Check if DFS should end
-    if (EndCondition(path)) {
-      return;
-    }
-    // This differs from wikipedia entry. We check if neighbors are visited 
-    // before adding them. Wikipedia checks after moving to them. May be source
-    // of future bugs but I think they are equivalent.
-    for (const NodeType& neighbor : GetNeighbors(curr_node)) {
-      if ((!visited.count(neighbor) || revisit_nodes) && std::find(path.begin(), path.end(), neighbor) == path.end()) {
-        node_depth[neighbor] = node_depth[curr_node] + 1;
-        node_stack.push(neighbor);
-      }
-    }
-  }
+  std::set<NodeType> visited;
+  std::vector<NodeType> path;
+  // Start recursive calls with empty visited set and path vector
+  DFSRecursive<NodeType>(start_node, GetNeighbors, ProcessPath, EndCondition,
+                        revisit_nodes, allow_cycles, depth, visited, path);
+  return;
 }
+
 
 
 // Structure to represent a simple grid with barriers and a moveable player 
