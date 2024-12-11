@@ -74,9 +74,7 @@ int PartOne(const std::vector<Coord>& starts, const std::vector<std::vector<char
   for (const Coord& start : starts) {
     aoc::BFS<Coord>(start,
                     GetNeighbors,
-                    ProcessPath,
-                    [](const std::vector<Coord>&) { return false; },
-                    false);
+                    ProcessPath);
   }
   return answer;
 }
