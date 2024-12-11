@@ -72,7 +72,11 @@ int PartOne(const std::vector<Coord>& starts, const std::vector<std::vector<char
   };
 
   for (const Coord& start : starts) {
-    aoc::BFS<Coord>(start, GetNeighbors, ProcessPath);
+    aoc::BFS<Coord>(start,
+                    GetNeighbors,
+                    ProcessPath,
+                    [](const std::vector<Coord>&) { return false; },
+                    false);
   }
   return answer;
 }
@@ -84,7 +88,7 @@ int PartTwo(const std::vector<Coord>& starts, const std::vector<std::vector<char
     return GetNodeNeighbors(node, map);
   };
 
-  auto ProcessPath = [&answer](const std::vector<Coord>& path, int depth) {
+  auto ProcessPath = [&answer](const std::vector<Coord>& path) {
     // Based on problem's construction, path from 0 to 9 will always have length 10
     if (path.size() == 10) {
       ++answer;
@@ -92,7 +96,7 @@ int PartTwo(const std::vector<Coord>& starts, const std::vector<std::vector<char
   };
 
   for (const Coord& start : starts) {
-    aoc::DFS<Coord>(start,
+    aoc::BFS<Coord>(start,
                     GetNeighbors,
                     ProcessPath,
                     [](const std::vector<Coord>&) { return false; },
