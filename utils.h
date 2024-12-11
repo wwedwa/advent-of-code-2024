@@ -184,22 +184,17 @@ void DFS(
     path.push_back(curr_node);
     curr_depth = node_depth[curr_node];  // Update current depth
 
+    ProcessPath(path);
+    visited.insert(curr_node);
     // Check if DFS should end
     if (EndCondition(path)) {
       return;
     }
-    // Only add neighbors if it hasn't been visited (if revisit_nodes is false)
-    // or if it has been visited in the current path
-    if (!visited.count(curr_node) || revisit_nodes) {
-      // Only process path if we have not visited this node or if revisiting
-      // is allowed
-      ProcessPath(path);
-      visited.insert(curr_node);
-      for (const NodeType& neighbor : GetNeighbors(curr_node)) {
-        if (std::find(path.begin(), path.end(), neighbor) == path.end()) {
-          node_depth[neighbor] = node_depth[curr_node] + 1;
-          node_stack.push(neighbor);
-        }
+
+    for (const NodeType& neighbor : GetNeighbors(curr_node)) {
+      if ((!visited.count(neighbor) || revisit_nodes) && std::find(path.begin(), path.end(), neighbor) == path.end()) {
+        node_depth[neighbor] = node_depth[curr_node] + 1;
+        node_stack.push(neighbor);
       }
     }
   }
