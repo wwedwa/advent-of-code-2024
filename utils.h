@@ -190,7 +190,9 @@ void DFS(
     if (EndCondition(path)) {
       return;
     }
-
+    // This differs from wikipedia entry. We check if neighbors are visited 
+    // before adding them. Wikipedia checks after moving to them. May be source
+    // of future bugs but I think they are equivalent.
     for (const NodeType& neighbor : GetNeighbors(curr_node)) {
       if ((!visited.count(neighbor) || revisit_nodes) && std::find(path.begin(), path.end(), neighbor) == path.end()) {
         node_depth[neighbor] = node_depth[curr_node] + 1;
