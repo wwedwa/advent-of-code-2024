@@ -1,7 +1,7 @@
 #include "utils.h"
 
 using ullong = unsigned long long;
-using Infoformat = std::list<ullong>;
+using Infoformat = std::unordered_map<ullong, ullong>;
 
 Infoformat GetInfo() {
   Infoformat info;
@@ -9,8 +9,10 @@ Infoformat GetInfo() {
   std::string line;
   while (std::getline(input, line)) {
     std::vector<ullong> num_vec = aoc::GetULLongs(aoc::split(line, " "));
-    // Copy vector into list for the insertion speed
-    info = std::list<ullong>(num_vec.begin(), num_vec.end());
+    // Make map
+    for (ullong stone : num_vec) {
+      info[stone] += 1;
+    }
   }
   return info;
 }
@@ -28,98 +30,41 @@ std::vector<ullong> Transform(ullong num) {
   }
 }
 
-void Blink(Infoformat& info) {
-  for (auto it = info.begin(); it != info.end(); ++it) {
-    std::vector<ullong> new_nums = Transform(*it);
-    if (new_nums.size() == 1) {
-      *it = new_nums[0];
-    } else {
-      it = info.erase(it);
-      info.insert(it, new_nums[0]);
-      it = info.insert(it, new_nums[1]);
+Infoformat Blink(const Infoformat& cache) {
+  Infoformat new_cache;
+  for (auto [stone, count] : cache) {
+    for (ullong new_stone : Transform(stone)) {
+      new_cache[new_stone] += count;
     }
   }
-}
-
-// Memoized DFS
-ullong DFSApproach(const Infoformat& info, int depth) {
-  ullong answer = 0;
-
-  // Key is stone value. Value is a map where key is i and value
-  // is a pair containing resulting number of stones after (depth - i) blinks
-  // and if this value is final
-  // NOTE: map will default initialize values to 0 which is relied upon in
-  // this function instead of counting and explicitly initializing
-  std::unordered_map<ullong, std::unordered_map<int, std::pair<ullong, bool>>> cache;
-
-  auto GetNeighbors = [](const ullong& node) -> std::vector<ullong> {
-    // If we are at max depth, no more neighbors
-    return Transform(node);
-  };
-
-  auto PreProcessPath = [&answer, &depth, &cache](const std::vector<ullong>& path) {
-    // No need to examine node if its cache entry is finalized
-    // Its score will be added in EndCondition
-    if (cache[path.back()][path.size() - 1].second) {
-      return;
-    }
-    // Only update cache and answer if this is a finished branch
-    if (path.size() != depth + 1) {
-      return;
-    }
-    // For each element in path, increase its cache entry since it contributed
-    // to a path which reached the end.
-    for (int i = 0; i < path.size(); ++i) {
-      ++cache[path[i]][i].first;
-    }
-    ++answer;
-  };
-
-  auto PostProcessPath = [&cache](const std::vector<ullong>& path) {
-    // If we have examined all children of a node, mark its cache entry as final
-    cache[path.back()][path.size() - 1].second = true;
-  };
-
-  auto EndCondition = [&answer, &cache](const std::vector<ullong>& path) -> bool {
-    // If a node's cache entry is final, add the count of its cache entry to
-    // the running total and end the search down the current path.
-    std::pair<ullong, bool> cache_entry = cache[path.back()][path.size() - 1];
-    if (cache_entry.second) {
-      answer += cache_entry.first;
-      // Update all elements which contributed to getting to this path.
-      for (int i = 0; i < path.size() - 1; ++i) {
-        if (cache.count(path[i])) {
-          cache[path[i]][i].first += cache_entry.first;
-        }
-      }
-      return true;
-    }
-    return false;
-  };
-
-  for (const ullong& start : info) {
-    aoc::DFS<ullong>(start,
-                  GetNeighbors,
-                  PreProcessPath,
-                  PostProcessPath,
-                  EndCondition,
-                  true,  // revisit nodes
-                  true,  // allow cycles
-                  depth);  // max depth of cycle
-  }
-  return answer;
+  return new_cache;
 }
 
 int PartOne(Infoformat info) {
   for (int i = 0; i < 25; ++i) {
-    Blink(info);
+    info = Blink(info);
   }
-  return info.size();
+  int answer = 0;
+  for (auto [_, count] : info) {
+    answer += count;
+  }
+  return answer;
 }
 
-// Create function for finding out what a 0 becomes after n steps
+
+// This caching solution relies on the fact that at any given time, there aren't
+// that many distinct stones. So we can actually just group them together.
+// Also, order of the stones does not matter (even though the problem would
+// lead you to believe it does)
 ullong PartTwo(Infoformat info) {
-  return DFSApproach(info, 75);
+  for (int i = 0; i < 75; ++i) {
+    info = Blink(info);
+  }
+  ullong answer = 0;
+  for (auto [_, count] : info) {
+    answer += count;
+  }
+  return answer;
 }
 
 int main() {
