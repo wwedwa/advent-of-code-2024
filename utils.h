@@ -47,6 +47,9 @@ std::vector<long long> GetLLongs(const std::vector<std::string>& strings);
 // Gets all unsigned longs from a vector of strings
 std::vector<unsigned long> GetULongs(const std::vector<std::string>& strings);
 
+// Gets all unsigned long longs from a vector of strings
+std::vector<unsigned long long> GetULLongs(const std::vector<std::string>& strings);
+
 // Calculate gcd with Euclid's Algorithm
 long gcd(long a, long b);
 
@@ -133,14 +136,13 @@ void BFS(
   return;
 }
 
-/**
- * The recursive function called from DFS. Call DFS, not this function
- */
+// The recursive function called from DFS. Call DFS, not this function
 template <typename NodeType>
 void DFSRecursive(
   const NodeType& node,
   const std::function<std::vector<NodeType>(const NodeType&)>& GetNeighbors,
-  const std::function<void(const std::vector<NodeType>&)>& ProcessPath,
+  const std::function<void(const std::vector<NodeType>&)>& PreProcessPath,
+  const std::function<void(const std::vector<NodeType>&)>& PostProcessPath,
   const std::function<bool(const std::vector<NodeType>&)>& EndCondition,
   bool revisit_nodes,
   bool allow_cycles,
@@ -150,26 +152,25 @@ void DFSRecursive(
 ) {
   visited.insert(node);
   path.push_back(node);
-  ProcessPath(path);
+  PreProcessPath(path);
+
   if (EndCondition(path)) {
+    path.pop_back();
     return;
   }
+  
   for (const NodeType& neighbor : GetNeighbors(node)) {
     bool add_node = (!visited.count(neighbor) || revisit_nodes) &&
                     (std::find(path.begin(), path.end(), neighbor) == path.end() ||
                     allow_cycles) &&
                     (!allow_cycles || path.size() <= depth);
     if (add_node) {
-      DFSRecursive(neighbor, GetNeighbors, ProcessPath, EndCondition,
-                    revisit_nodes, allow_cycles, depth, visited, path);
+      DFSRecursive<NodeType>(neighbor, GetNeighbors, PreProcessPath,
+                            PostProcessPath, EndCondition, revisit_nodes,
+                            allow_cycles, depth, visited, path);
     }
   }
-  // Check this both above and below adding neighbors. The first one will
-  // trigger a cascade of all previous calls to return as well since this
-  // one is checked if a subsequent call returns.
-  if (EndCondition(path)) {
-    return;
-  }
+  PostProcessPath(path);
   path.pop_back();
 }
 
@@ -183,11 +184,15 @@ void DFSRecursive(
  * 
  * @param start_node The node to start the search at
  * @param GetNeighbors A function that returns the neighbors of the current node
- * @param ProcessPath An optional function that takes the current path of nodes 
- * for any neccessary processing. Called every time BFS moves to a new node.
+ * @param PreProcessPath A function that takes the current path of nodes 
+ * for any neccessary processing. Called every time DFS moves to a new node,
+ * before checking out its neighbors.
+ * @param PostProcessPath A function that takes the current path of nodes for
+ * any necessary processing. Called AFTER neighbors of the node are checked out
+ * once the call stack returns to the node in question
  * @param EndCondition An optional function that is called every time BFS moves 
- * to a new node. If true, the search ends. Default is to always return false.
- * It is called after ProcessNode
+ * to a new node. If true, the search ON THE CURRENT NODE ends. To end the
+ * entire search, handle that in your implemenation of EndCondition.
  * @param revisit_nodes A flag for if the DFS algorithm should ever revisit
  * nodes that it visited in previous paths but NOT in the current path. Default
  * is false.
@@ -200,7 +205,8 @@ template <typename NodeType>
 void DFS(
   const NodeType& start_node,
   const std::function<std::vector<NodeType>(const NodeType&)>& GetNeighbors,
-  const std::function<void(const std::vector<NodeType>&)>& ProcessPath,
+  const std::function<void(const std::vector<NodeType>&)>& PreProcessPath,
+  const std::function<void(const std::vector<NodeType>&)>& PostProcessPath,
   const std::function<bool(const std::vector<NodeType>&)>& EndCondition = [](const std::vector<NodeType>&) { return false; },
   bool revisit_nodes = false,
   bool allow_cycles = false,
@@ -209,8 +215,9 @@ void DFS(
   std::set<NodeType> visited;
   std::vector<NodeType> path;
   // Start recursive calls with empty visited set and path vector
-  DFSRecursive<NodeType>(start_node, GetNeighbors, ProcessPath, EndCondition,
-                        revisit_nodes, allow_cycles, depth, visited, path);
+  DFSRecursive<NodeType>(start_node, GetNeighbors, PreProcessPath,
+                        PostProcessPath, EndCondition, revisit_nodes,
+                        allow_cycles, depth, visited, path);
   return;
 }
 
