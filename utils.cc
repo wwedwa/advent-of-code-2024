@@ -82,6 +82,16 @@ std::vector<unsigned long> GetULongs(const std::vector<std::string>& strings) {
   return ulongs;
 }
 
+std::vector<unsigned long long> GetULLongs(const std::vector<std::string>& strings) {
+  std::vector<unsigned long long> ullongs;
+  for (const std::string& s : strings) {
+    if (IsInt(s)) {
+      ullongs.push_back(stoull(s));
+    }
+  }
+  return ullongs;
+}
+
 long gcd(long a, long b) {
   if (b == 0)
     return a;
