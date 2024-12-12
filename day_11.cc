@@ -41,13 +41,16 @@ void Blink(Infoformat& info) {
   }
 }
 
+// Memoized DFS
 ullong DFSApproach(const Infoformat& info, int depth) {
   ullong answer = 0;
 
-  // Key is stone value. Value is a map where key is n and value
-  // is a pair containing resulting number of stones after n blinks and
-  // if this value is final
-  std::map<ullong, std::map<int, std::pair<ullong, bool>>> cache;
+  // Key is stone value. Value is a map where key is i and value
+  // is a pair containing resulting number of stones after (depth - i) blinks
+  // and if this value is final
+  // NOTE: map will default initialize values to 0 which is relied upon in
+  // this function instead of counting and explicitly initializing
+  std::unordered_map<ullong, std::unordered_map<int, std::pair<ullong, bool>>> cache;
 
   auto GetNeighbors = [](const ullong& node) -> std::vector<ullong> {
     // If we are at max depth, no more neighbors
@@ -55,41 +58,41 @@ ullong DFSApproach(const Infoformat& info, int depth) {
   };
 
   auto PreProcessPath = [&answer, &depth, &cache](const std::vector<ullong>& path) {
-    if (cache[path.back()][0].second) {
+    // No need to examine node if its cache entry is finalized
+    // Its score will be added in EndCondition
+    if (cache[path.back()][path.size() - 1].second) {
       return;
     }
+    // Only update cache and answer if this is a finished branch
     if (path.size() != depth + 1) {
       return;
     }
+    // For each element in path, increase its cache entry since it contributed
+    // to a path which reached the end.
     for (int i = 0; i < path.size(); ++i) {
-      if (!cache.count(path[i])) {
-        cache[path[i]][depth - i] = {0, false};
-      }
-      ++cache[path[i]][depth - i].first;
+      ++cache[path[i]][i].first;
     }
     ++answer;
   };
 
-  auto PostProcessPath = [&depth, &cache](const std::vector<ullong>& path) {
-    for (int i = 0; i < path.size(); ++i) {
-      if (cache.count(path[i])) {
-        cache[path[i]][depth - i].second = true;
-      }
-    }
+  auto PostProcessPath = [&cache](const std::vector<ullong>& path) {
+    // If we have examined all children of a node, mark its cache entry as final
+    cache[path.back()][path.size() - 1].second = true;
   };
 
-  auto EndCondition = [&answer, &depth, &cache](const std::vector<ullong>& path) -> bool {
-    if (cache.count(path.back())) {
-      std::pair<ullong, bool> cache_entry = cache[path.back()][depth - path.size() + 1];
-      if (cache_entry.second) {
-        answer += cache_entry.first;
-        for (int i = 0; i < path.size() - 1; ++i) {
-          if (cache.count(path[i])) {
-            cache[path[i]][depth - i].first += cache_entry.first;
-          }
+  auto EndCondition = [&answer, &cache](const std::vector<ullong>& path) -> bool {
+    // If a node's cache entry is final, add the count of its cache entry to
+    // the running total and end the search down the current path.
+    std::pair<ullong, bool> cache_entry = cache[path.back()][path.size() - 1];
+    if (cache_entry.second) {
+      answer += cache_entry.first;
+      // Update all elements which contributed to getting to this path.
+      for (int i = 0; i < path.size() - 1; ++i) {
+        if (cache.count(path[i])) {
+          cache[path[i]][i].first += cache_entry.first;
         }
-        return true;
       }
+      return true;
     }
     return false;
   };
