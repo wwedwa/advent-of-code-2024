@@ -60,8 +60,8 @@ std::vector<Coord> GetNodeNeighbors(const Coord& node, const std::vector<std::ve
 int PartOne(const std::vector<Coord>& starts, const std::vector<std::vector<char>>& map) {
   int answer = 0;
 
-  auto GetNeighbors = [&map](const Coord& node) -> std::vector<Coord> {
-    return GetNodeNeighbors(node, map);
+  auto GetNeighbors = [&map](const std::vector<Coord>& path) -> std::vector<Coord> {
+    return GetNodeNeighbors(path.back(), map);
   };
 
   auto ProcessPath = [&answer](const std::vector<Coord>& path) {
@@ -82,8 +82,8 @@ int PartOne(const std::vector<Coord>& starts, const std::vector<std::vector<char
 int PartTwo(const std::vector<Coord>& starts, const std::vector<std::vector<char>>& map) {
   int answer = 0;
 
-  auto GetNeighbors = [&map](const Coord& node) -> std::vector<Coord> {
-    return GetNodeNeighbors(node, map);
+  auto GetNeighbors = [&map](const std::vector<Coord>& path) -> std::vector<Coord> {
+    return GetNodeNeighbors(path.back(), map);
   };
 
   auto ProcessPath = [&answer](const std::vector<Coord>& path) {

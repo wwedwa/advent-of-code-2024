@@ -59,8 +59,12 @@ long lcm(std::vector<int> nums);
 // Calculate a special mod
 int mod(int m, int n);
 
-// Find all instances of a regex pattern in the given string
-std::vector<std::string> FindAllRegex(std::string input, std::string pattern);
+// Find all instances of a regex pattern in the given string. Returned as strings
+std::vector<std::string> FindAllRegexStrings(std::string input, std::string pattern);
+
+// Find all instances of a regex pattern in the given string. Returned as smatch
+// object for post processing.
+std::vector<std::smatch> FindAllRegexMatches(std::string input, std::string pattern);
 
 // Returns true if the input and pattern are exact matches. Otherwise, false
 bool ExactRegexMatch(std::string input, std::string pattern);
@@ -89,7 +93,7 @@ bool ExactRegexMatch(std::string input, std::string pattern);
 template <typename NodeType>
 void BFS(
   const NodeType& start_node,
-  const std::function<std::vector<NodeType>(const NodeType&)>& GetNeighbors,
+  const std::function<std::vector<NodeType>(const std::vector<NodeType>&)>& GetNeighbors,
   const std::function<void(const std::vector<NodeType>&)>& ProcessPath = [](const std::vector<NodeType>&) {},
   const std::function<bool(const std::vector<NodeType>&)>& EndCondition = [](const std::vector<NodeType>&) { return false; },
   bool revisit_nodes = false
@@ -123,7 +127,7 @@ void BFS(
       return;
     }
     
-    for (const NodeType& neighbor : GetNeighbors(curr_node)) {
+    for (const NodeType& neighbor : GetNeighbors(path)) {
       if ((!visited.count(neighbor) || revisit_nodes) && std::find(path.begin(), path.end(), neighbor) == path.end()) {
         node_queue.push(neighbor);
         if (!revisit_nodes) {
@@ -140,9 +144,8 @@ void BFS(
 template <typename NodeType>
 void DFSRecursive(
   const NodeType& node,
-  const std::function<std::vector<NodeType>(const NodeType&)>& GetNeighbors,
-  const std::function<void(const std::vector<NodeType>&)>& PreProcessPath,
-  const std::function<void(const std::vector<NodeType>&)>& PostProcessPath,
+  const std::function<std::vector<NodeType>(const std::vector<NodeType>&)>& GetNeighbors,
+  const std::function<void(const std::vector<NodeType>&)>& ProcessPath,
   const std::function<bool(const std::vector<NodeType>&)>& EndCondition,
   bool revisit_nodes,
   bool allow_cycles,
@@ -152,25 +155,24 @@ void DFSRecursive(
 ) {
   visited.insert(node);
   path.push_back(node);
-  PreProcessPath(path);
+  ProcessPath(path);
 
   if (EndCondition(path)) {
     path.pop_back();
     return;
   }
   
-  for (const NodeType& neighbor : GetNeighbors(node)) {
+  for (const NodeType& neighbor : GetNeighbors(path)) {
     bool add_node = (!visited.count(neighbor) || revisit_nodes) &&
                     (std::find(path.begin(), path.end(), neighbor) == path.end() ||
                     allow_cycles) &&
                     (!allow_cycles || path.size() <= depth);
     if (add_node) {
-      DFSRecursive<NodeType>(neighbor, GetNeighbors, PreProcessPath,
-                            PostProcessPath, EndCondition, revisit_nodes,
-                            allow_cycles, depth, visited, path);
+      DFSRecursive<NodeType>(neighbor, GetNeighbors, ProcessPath,
+                            EndCondition, revisit_nodes, allow_cycles,
+                            depth, visited, path);
     }
   }
-  PostProcessPath(path);
   path.pop_back();
 }
 
@@ -184,12 +186,9 @@ void DFSRecursive(
  * 
  * @param start_node The node to start the search at
  * @param GetNeighbors A function that returns the neighbors of the current node
- * @param PreProcessPath A function that takes the current path of nodes 
+ * @param ProcessPath A function that takes the current path of nodes 
  * for any neccessary processing. Called every time DFS moves to a new node,
  * before checking out its neighbors.
- * @param PostProcessPath A function that takes the current path of nodes for
- * any necessary processing. Called AFTER neighbors of the node are checked out
- * once the call stack returns to the node in question
  * @param EndCondition An optional function that is called every time BFS moves 
  * to a new node. If true, the search ON THE CURRENT NODE ends. To end the
  * entire search, handle that in your implemenation of EndCondition.
@@ -204,9 +203,8 @@ void DFSRecursive(
 template <typename NodeType>
 void DFS(
   const NodeType& start_node,
-  const std::function<std::vector<NodeType>(const NodeType&)>& GetNeighbors,
-  const std::function<void(const std::vector<NodeType>&)>& PreProcessPath,
-  const std::function<void(const std::vector<NodeType>&)>& PostProcessPath,
+  const std::function<std::vector<NodeType>(const std::vector<NodeType>&)>& GetNeighbors,
+  const std::function<void(const std::vector<NodeType>&)>& ProcessPath = [](const std::vector<NodeType>&) {},
   const std::function<bool(const std::vector<NodeType>&)>& EndCondition = [](const std::vector<NodeType>&) { return false; },
   bool revisit_nodes = false,
   bool allow_cycles = false,
@@ -215,10 +213,23 @@ void DFS(
   std::set<NodeType> visited;
   std::vector<NodeType> path;
   // Start recursive calls with empty visited set and path vector
-  DFSRecursive<NodeType>(start_node, GetNeighbors, PreProcessPath,
-                        PostProcessPath, EndCondition, revisit_nodes,
-                        allow_cycles, depth, visited, path);
+  DFSRecursive<NodeType>(start_node, GetNeighbors, ProcessPath,
+                        EndCondition, revisit_nodes, allow_cycles,
+                        depth, visited, path);
   return;
+}
+
+template <typename NodeType>
+void Dijkstra(
+  const NodeType& start_node,
+  const std::function<std::vector<NodeType>(const NodeType&, const std::map<NodeType, NodeType>&)>& GetNeighbors,
+  const std::function<void(const std::map<NodeType, NodeType>&)>& ProcessPath = [](const std::map<NodeType, NodeType>&) {},
+  const std::function<bool(const std::map<NodeType, NodeType>)>& EndCondition = [](const std::map<NodeType, NodeType>&) { return false; }
+) {
+  // Value corresponding to each key is the prev node in the path
+  // With this, we can reconstruct all shortest paths
+  std::map<NodeType, NodeType> prev_nodes;
+
 }
 
 

@@ -132,7 +132,7 @@ int PartOne(infoformat& info) {
   // Use regex to find all occurrences of XMAS
   std::string pattern = "XMAS";
   for (std::string& line : all_lines) {
-   answer += aoc::FindAllRegex(line, pattern).size();
+   answer += aoc::FindAllRegexStrings(line, pattern).size();
   }
 
   return answer;

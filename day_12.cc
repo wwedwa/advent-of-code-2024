@@ -103,8 +103,8 @@ int PartOne(const Infoformat& info) {
   int curr_area = 0;
   std::set<Coord> visited_nodes;
 
-  auto GetNeighbors = [&](const Coord& node) -> std::vector<Coord> {
-    std::vector<Coord> neighbors = GetNeighborPlots(info, node);
+  auto GetNeighbors = [&](const std::vector<Coord>& path) -> std::vector<Coord> {
+    std::vector<Coord> neighbors = GetNeighborPlots(info, path.back());
     curr_perimeter += 4 - neighbors.size();
     return neighbors;
   };
@@ -142,16 +142,15 @@ int PartTwo(Infoformat& info) {
   int curr_area = 0;
   std::set<Coord> visited_nodes;
 
-  auto GetNeighbors = [&](const Coord& node) -> std::vector<Coord> {
-    std::vector<Coord> neighbors = GetNeighborPlots(info, node);
+  auto GetNeighbors = [&](const std::vector<Coord>& path) -> std::vector<Coord> {
+    std::vector<Coord> neighbors = GetNeighborPlots(info, path.back());
     // Using fact that polygons have same number of sides as they do corners.
-    curr_sides += CountCorners(info, node);
+    curr_sides += CountCorners(info, path.back());
     return neighbors;
   };
 
   // Every time we visit a new node, increment area. Technically, we could do
-  // this in GetNeighbors since we do not care about the path at all in this
-  // problem, but we do it here for separation of concerns
+  // this in GetNeighbors
   auto ProcessPath = [&](const std::vector<Coord>& path) {
     visited_nodes.insert(path.back());
     ++curr_area;

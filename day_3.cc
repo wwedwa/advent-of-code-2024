@@ -22,7 +22,7 @@ int PerformMult(std::string mult) {
 int PartOne(std::string& info) {
   int answer = 0;
   std::string pattern = "mul\\(([1-9][0-9]{0,2}),([1-9][0-9]{0,2})\\)";
-  std::vector<std::string> occurences = aoc::FindAllRegex(info, pattern);
+  std::vector<std::string> occurences = aoc::FindAllRegexStrings(info, pattern);
   for (std::string mult : occurences) {
     answer += PerformMult(mult);
   }
@@ -32,7 +32,7 @@ int PartOne(std::string& info) {
 int PartTwo(std::string& info) {
   int answer = 0;
   std::string pattern = "mul\\(([1-9][0-9]{0,2}),([1-9][0-9]{0,2})\\)|do\\(\\)|don't\\(\\)";
-  std::vector<std::string> occurences = aoc::FindAllRegex(info, pattern);
+  std::vector<std::string> occurences = aoc::FindAllRegexStrings(info, pattern);
 
   // Keep track of if we should add the mults or not
   bool enabled = true;
