@@ -219,20 +219,73 @@ void DFS(
   return;
 }
 
+/**
+ * @brief A generic Dijkstra's algorithm that allows optional processing of
+ * the current node and path
+ * 
+ * NodeType must define < and == for use in maps. Each function argument
+ * is given the entire state of the algorithm: the current node, a map of all
+ * nodes and the previous nodes travelled to get to them (for path reconstructon),
+ * and the current shortest distances from each node to the start
+ * 
+ * @param start_node The node to start the search at
+ * @param GetNeighbors A function that returns neighbors and the weights of the
+ * edges which connect them to the current node in the form (weight, node)
+ * @param ProcessPath A function that takes the current node and path of nodes 
+ * for any neccessary processing. Called every time the algo moves to a new node
+ * @param EndCondition An optional function that is called every time the algo
+ * moves to a new node. If true, the search ends.
+ */
 template <typename NodeType>
 void Dijkstra(
   const NodeType& start_node,
-  const std::function<std::vector<NodeType>(const NodeType&, const std::map<NodeType, NodeType>&)>& GetNeighbors,
-  const std::function<void(const std::map<NodeType, NodeType>&)>& ProcessPath = [](const std::map<NodeType, NodeType>&) {},
-  const std::function<bool(const std::map<NodeType, NodeType>)>& EndCondition = [](const std::map<NodeType, NodeType>&) { return false; }
+  const std::function<std::vector<std::pair<int, NodeType>>(const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&)>& GetNeighbors,
+  const std::function<void(const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&)>& ProcessPath = [](const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&) {},
+  const std::function<bool(const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&)>& EndCondition = [](const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&) { return false; }
 ) {
+
+  // Define the custom comparator
+  auto compare = [](const std::pair<int, NodeType>& a,
+                const std::pair<int, NodeType>& b) {
+      return a.first > b.first;
+  };
   // Value corresponding to each key is the prev node in the path
   // With this, we can reconstruct all shortest paths
   std::map<NodeType, NodeType> prev_nodes;
+  // Distance from nodes to start
+  std::map<NodeType, int> dists;
+  // Set containing pairs of nodes and their distances from start
+  std::priority_queue<std::pair<int, NodeType>,
+                      std::vector<std::pair<int, NodeType>>,
+                      decltype(compare)> to_visit(compare);
+  
+  prev_nodes[start_node] = start_node;
+  dists[start_node] = 0;
+  to_visit.emplace(0, start_node);
 
+  while (!to_visit.empty()) {
+    auto [start_dist, curr_node] = to_visit.top();
+    to_visit.pop();
+
+    ProcessPath(curr_node, prev_nodes, dists);
+    
+    if (EndCondition(curr_node, prev_nodes, dists)) {
+      return;
+    }
+
+    for (const auto& [edge_dist, neighbor] : GetNeighbors(curr_node, prev_nodes, dists)) {
+      // Add neighbor if it is not in dists map (aka distance of infinity)
+      // or if new calculated dist is less than the dist in the dists map.
+      int new_dist = start_dist + edge_dist;
+      bool add_neighbor = dists.count(neighbor) ? new_dist < dists[neighbor] : true;
+      if (add_neighbor) {
+        dists[neighbor] = new_dist;
+        prev_nodes[neighbor] = curr_node;
+        to_visit.emplace(new_dist, neighbor);
+      }
+    }
+  }
 }
-
-
 
 // Structure to represent a simple grid with barriers and a moveable player 
 // since that is a common data structure in AoC. Assumes the top left coord 

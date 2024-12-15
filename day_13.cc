@@ -1,6 +1,8 @@
 #include "utils.h"
 
-using Coord = std::pair<int, int>;
+using llong = long long;
+using ullong = unsigned long long;
+using Coord = std::pair<llong, llong>;
 // Contains three Coords: First one is the x,y movement for button A, 
 // second one is x,y movement for button B, third one is prize location
 using Infoformat = std::vector<std::tuple<Coord, Coord, Coord>>;
@@ -15,114 +17,106 @@ Infoformat GetInfo() {
       continue;  // skip new lines
     }
     std::vector<std::string> a_button = aoc::FindAllRegexStrings(line, "\\d+");
-    Coord a_movement = {std::stoi(a_button[0]), std::stoi(a_button[1])};
+    Coord a_movement = {std::stoll(a_button[0]), std::stoll(a_button[1])};
     std::getline(input, line);
 
     std::vector<std::string> b_button = aoc::FindAllRegexStrings(line, "\\d+");
-    Coord b_movement = {std::stoi(b_button[0]), std::stoi(b_button[1])};
+    Coord b_movement = {std::stoll(b_button[0]), std::stoll(b_button[1])};
     std::getline(input, line);
 
     std::vector<std::string> prize = aoc::FindAllRegexStrings(line, "\\d+");
-    Coord prize_loc = {std::stoi(prize[0]), std::stoi(prize[1])};
+    Coord prize_loc = {std::stoll(prize[0]), std::stoll(prize[1])};
 
     info.emplace_back(a_movement, b_movement, prize_loc);
   }
   return info;
 }
 
-// Movement in these machines can be represented as a linear Diophantine
-// equation ax + by = c. These only have sols when gcd(a,b) | c
-// Thanks number theory class for this quick check
-// Note that this returns true even if there is a non positive solution
-// To check for only positive we would need to use extended Euclidean algorithm
-// but I'm trusting this is sufficent for now.
-bool IsPossible(Coord a_move, Coord b_move, Coord prize_loc) {
-  // Check if movement is possible in each axis
-  bool is_x_possible = prize_loc.first % std::gcd(a_move.first, b_move.first) == 0;
-  bool is_y_possible = prize_loc.second % std::gcd(a_move.second, b_move.second) == 0;
-  return is_x_possible && is_y_possible;
-}
+// Each machine can be represented as two linear equations:
+//     -- ax + by = c
+//     -- dx + ey = f
+// where:
+//     a and d are the x,y movements corresponding to the A button
+//     b and e are the x,y movements corresponding to the B button
+//     c and f are the x,y coords corresponding to the prize location
+//     x and y are the number of times the A and B buttons are pressed
+Coord FindSol(Coord a_move, Coord b_move, Coord prize_loc) {
+  llong a = a_move.first;
+  llong d = a_move.second;
+  llong b = b_move.first;
+  llong e = b_move.second;
+  llong c = prize_loc.first;
+  llong f = prize_loc.second;
 
-// No more than 100 presses for each button
-std::pair<bool, bool> ValidPressCount(const Coord& node, const std::map<Coord, Coord>& prev_nodes, const Coord& a_move) {
-  int a_count = 0;
-  int b_count = 0;
-  bool path_done = false;
-  Coord curr_node = node;
-  while (!path_done) {
-    Coord new_node = prev_nodes.at(curr_node);
-    if (new_node == curr_node) {
-      path_done = true;
-    }
-    if (new_node.first - curr_node.first == a_move.first && new_node.second - curr_node.second == a_move.second) {
-      ++a_count;
-    } else {
-      ++b_count;
-    }
-    curr_node = new_node;
+  llong determinant = b * d - a * e;
+  // no sol, indicate with (-1, -1)
+  if (determinant == 0) {
+    return {-1, -1};
   }
-  return {a_count < 100, b_count < 100};
+  double y = (c * d - f * a) / (double)determinant;
+  double intpart = 0;
+  // Only want positive integer solutions
+  if (modf(y, &intpart) != 0.0 || y < 0) {
+    return {-1, -1};
+  }
+  double x = ((c * d) - (b * d * y)) / ((double)a * d);
+  // Again, only want positive integer solutions
+  if (modf(x, &intpart) != 0.0 || x < 0) {
+    return {-1, -1};
+  }
+
+  return {(llong)x, (llong)y};
 }
 
+llong PartOne(const Infoformat& info) {
+  llong answer = 0;
 
-
-int PartOne(const Infoformat& info) {
-  int answer = 0;
-
-  Coord start = {0, 0};
   Coord a_move;
   Coord b_move;
   Coord prize_loc;
-
-  auto GetNeighbors = [&](const Coord& node,
-                        const std::map<Coord, Coord>& prev_nodes,
-                        const std::map<Coord, int>& dists) -> 
-                        std::vector<std::pair<int, Coord>> {
-    std::vector<std::pair<int, Coord>> neighbors;
-    auto [add_a, add_b] = ValidPressCount(node, prev_nodes, a_move);
-    Coord a_neighbor = {node.first + a_move.first, node.second + a_move.second};
-    Coord b_neighbor = {node.first + b_move.first, node.second + b_move.second};
-
-    if (add_a && a_neighbor.first <= prize_loc.first && a_neighbor.second <= prize_loc.second) {
-      neighbors.emplace_back(3, a_neighbor);
-    }
-    if (add_b && b_neighbor.first <= prize_loc.first && b_neighbor.second <= prize_loc.second) {
-      neighbors.emplace_back(1, b_neighbor);
-    }
-    return neighbors;
-  };
-
-  auto ProcessPath = [](const Coord&, const std::map<Coord, Coord>&, const std::map<Coord, int>&) {};
-
-  auto EndCondition = [&](const Coord& node,
-                        const std::map<Coord, Coord>& prev_nodes,
-                        const std::map<Coord, int>& dists) -> 
-                        bool {
-    if (node == prize_loc) {
-      answer += dists.at(node);
-      return true;
-    }
-    return false;
-  };
 
   int count = 1;
   for (const std::tuple<Coord, Coord, Coord>& machine : info) {
     a_move = std::get<0>(machine);
     b_move = std::get<1>(machine);
     prize_loc = std::get<2>(machine);
-    if (!IsPossible(a_move, b_move, prize_loc)) {
+    Coord sol = FindSol(a_move, b_move, prize_loc);
+    //std::cout << "Sol for machine " << count << ": (" << sol.first << ", " << sol.second << ")" << std::endl;
+    ++count;
+    if (sol.first == -1 && sol.second == -1) {
       continue;
     }
+    answer += 3 * sol.first + sol.second;
     std::cout << "Looking at machine " << count << std::endl;
-    ++count;
-
-    aoc::Dijkstra<Coord>(start, GetNeighbors, ProcessPath, EndCondition);
   }
   return answer;
 }
 
-int PartTwo(const Infoformat& info) {
-  int answer = 0;
+// Exact same as part one except add the offset
+llong PartTwo(const Infoformat& info) {
+  llong answer = 0;
+
+  Coord a_move;
+  Coord b_move;
+  Coord prize_loc;
+
+  llong offset = 10000000000000;
+
+  int count = 1;
+  for (const std::tuple<Coord, Coord, Coord>& machine : info) {
+    a_move = std::get<0>(machine);
+    b_move = std::get<1>(machine);
+    prize_loc = std::get<2>(machine);
+    Coord new_prize_loc = {prize_loc.first + offset, prize_loc.second + offset};
+    Coord sol = FindSol(a_move, b_move, new_prize_loc);
+    //std::cout << "Sol for machine " << count << ": (" << sol.first << ", " << sol.second << ")" << std::endl;
+    ++count;
+    if (sol.first == -1 && sol.second == -1) {
+      continue;
+    }
+    answer += 3 * sol.first + sol.second;
+    std::cout << "Looking at machine " << count << std::endl;
+  }
   return answer;
 }
 
@@ -131,10 +125,10 @@ int main() {
   Infoformat info = GetInfo();
   auto read_done = std::chrono::steady_clock::now();
 
-  int answer_one = PartOne(info);
+  llong answer_one = PartOne(info);
   auto part_one_done = std::chrono::steady_clock::now();
 
-  int answer_two = PartTwo(info);
+  llong answer_two = PartTwo(info);
   auto part_two_done = std::chrono::steady_clock::now();
 
   std::cout << "Part One Answer: " << answer_one << std::endl;
