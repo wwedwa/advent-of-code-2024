@@ -4,6 +4,7 @@
 // All of this is included just so I don't have to include it separately in every day
 #include <iostream>
 #include <chrono>
+#include <stdlib.h>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -57,7 +58,7 @@ long gcd(long a, long b);
 long lcm(std::vector<int> nums);
 
 // Calculate a special mod
-int mod(int m, int n);
+int PosMod(int m, int n);
 
 // Find all instances of a regex pattern in the given string. Returned as strings
 std::vector<std::string> FindAllRegexStrings(std::string input, std::string pattern);

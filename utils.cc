@@ -106,8 +106,9 @@ long lcm(std::vector<int> nums) {
   return lcm;
 }
 
-int mod(int a, int b) {
-  return a - b * (a / b);
+// returns a (mod m) always in the range from 0 to m - 1
+int PosMod(int a, int b) {
+  return (a % b + b) % b;
 }
 
 std::vector<std::string> FindAllRegexStrings(std::string input, std::string pattern) {
