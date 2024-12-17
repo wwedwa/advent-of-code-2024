@@ -245,7 +245,7 @@ void Dijkstra(
   const std::function<bool(const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&)>& EndCondition = [](const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&) { return false; }
 ) {
 
-  // Define the custom comparator
+  // Define the custom comparator, compare by distance from start
   auto compare = [](const std::pair<int, NodeType>& a,
                 const std::pair<int, NodeType>& b) {
       return a.first > b.first;
