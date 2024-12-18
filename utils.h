@@ -141,6 +141,11 @@ void BFS(
   return;
 }
 
+template <typename NodeType>
+struct DFSState {
+
+};
+
 // The recursive function called from DFS. Call DFS, not this function
 template <typename NodeType>
 void DFSRecursive(
@@ -195,7 +200,7 @@ void DFSRecursive(
  * entire search, handle that in your implemenation of EndCondition.
  * @param revisit_nodes A flag for if the DFS algorithm should ever revisit
  * nodes that it visited in previous paths but NOT in the current path. Default
- * is false.
+ * is false. Good for searching all paths in a tree
  * @param allow_cycles A flag for if DFS algorithm should allow cycles. If true,
  * revisit_nodes is automatically set to true. Default is false.
  * @param depth An int only used if allow_cycles is true. Will stop searching
@@ -220,6 +225,27 @@ void DFS(
   return;
 }
 
+// Comparator used in the priority queue in Dijkstras. Elements with shortest
+// distance from start node have greater priority.
+template <typename NodeType>
+struct Compare {
+  bool operator()(const std::pair<int, NodeType>& a,
+                  const std::pair<int, NodeType>& b) const {
+    return a.first > b.first;
+  }
+};
+
+// Struct to maintain the state of Dijkstra's algo
+template <typename NodeType>
+struct DijkstraState {
+  NodeType curr_node;
+  std::map<NodeType, NodeType> prev_nodes;
+  std::map<NodeType, int> dists;
+  std::priority_queue<std::pair<int, NodeType>,
+                      std::vector<std::pair<int, NodeType>>,
+                      Compare<NodeType>> to_visit;
+};
+
 /**
  * @brief A generic Dijkstra's algorithm that allows optional processing of
  * the current node and path
@@ -231,34 +257,24 @@ void DFS(
  * 
  * @param start_node The node to start the search at
  * @param GetNeighbors A function that returns neighbors and the weights of the
- * edges which connect them to the current node in the form (weight, node)
- * @param ProcessPath A function that takes the current node and path of nodes 
- * for any neccessary processing. Called every time the algo moves to a new node
+ * edges which connect them to the current node
+ * @param ProcessPath A function that takes the state of the algo for any
+ * neccessary processing. Called every time the algo moves to a new node
  * @param EndCondition An optional function that is called every time the algo
  * moves to a new node. If true, the search ends.
  */
 template <typename NodeType>
-void Dijkstra(
+DijkstraState<NodeType> Dijkstra(
   const NodeType& start_node,
-  const std::function<std::vector<std::pair<int, NodeType>>(const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&)>& GetNeighbors,
-  const std::function<void(const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&)>& ProcessPath = [](const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&) {},
-  const std::function<bool(const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&)>& EndCondition = [](const NodeType&, const std::map<NodeType, NodeType>&, const std::map<NodeType, int>&) { return false; }
+  const std::function<std::map<NodeType, int>(const DijkstraState<NodeType>& state)>& GetNeighbors,
+  const std::function<void(const DijkstraState<NodeType>& state)>& ProcessPath = [](const DijkstraState<NodeType>& state) {},
+  const std::function<bool(const DijkstraState<NodeType>& state)>& EndCondition = [](const DijkstraState<NodeType>& state) { return false; }
 ) {
 
-  // Define the custom comparator, compare by distance from start
-  auto compare = [](const std::pair<int, NodeType>& a,
-                const std::pair<int, NodeType>& b) {
-      return a.first > b.first;
-  };
-  // Value corresponding to each key is the prev node in the path
-  // With this, we can reconstruct all shortest paths
-  std::map<NodeType, NodeType> prev_nodes;
-  // Distance from nodes to start
-  std::map<NodeType, int> dists;
-  // Set containing pairs of nodes and their distances from start
-  std::priority_queue<std::pair<int, NodeType>,
-                      std::vector<std::pair<int, NodeType>>,
-                      decltype(compare)> to_visit(compare);
+  DijkstraState<NodeType> state;
+  auto& prev_nodes = state.prev_nodes;
+  auto& dists = state.dists;
+  auto& to_visit = state.to_visit;
   
   prev_nodes[start_node] = start_node;
   dists[start_node] = 0;
@@ -266,26 +282,102 @@ void Dijkstra(
 
   while (!to_visit.empty()) {
     auto [start_dist, curr_node] = to_visit.top();
+    state.curr_node = curr_node;
     to_visit.pop();
 
-    ProcessPath(curr_node, prev_nodes, dists);
+    ProcessPath(state);
     
-    if (EndCondition(curr_node, prev_nodes, dists)) {
-      return;
+    if (EndCondition(state)) {
+      return state;
     }
 
-    for (const auto& [edge_dist, neighbor] : GetNeighbors(curr_node, prev_nodes, dists)) {
+    for (const auto& [neighbor, edge_dist] : GetNeighbors(state)) {
       // Add neighbor if it is not in dists map (aka distance of infinity)
       // or if new calculated dist is less than the dist in the dists map.
       int new_dist = start_dist + edge_dist;
-      bool add_neighbor = dists.count(neighbor) ? new_dist < dists[neighbor] : true;
-      if (add_neighbor) {
+      if (!dists.count(neighbor) || new_dist < dists[neighbor]) {
         dists[neighbor] = new_dist;
         prev_nodes[neighbor] = curr_node;
         to_visit.emplace(new_dist, neighbor);
       }
     }
   }
+  return state;
+}
+
+// Struct to maintain the state of Dijkstra's algo
+template <typename NodeType>
+struct ExDijkstraState {
+  NodeType curr_node;
+  // Save all prev nodes that lead to a path of equivalent distance from start
+  std::map<NodeType, std::set<NodeType>> prev_nodes;
+  std::map<NodeType, int> dists;
+  std::priority_queue<std::pair<int, NodeType>,
+                      std::vector<std::pair<int, NodeType>>,
+                      Compare<NodeType>> to_visit;
+};
+
+/**
+ * @brief An extended Dijkstra's algorithm for finding ALL shortest paths from
+ * the start to any node. The returned state will hold prev_nodes, a subgraph
+ * containing all of these shortest paths.
+ * 
+ * NodeType must define < and == for use in maps. Each function argument
+ * is given the entire state of the algorithm: the current node, a map of all
+ * nodes and the previous nodes travelled to get to them (for path reconstructon),
+ * and the current shortest distances from each node to the start
+ * 
+ * @param start_node The node to start the search at
+ * @param GetNeighbors A function that returns neighbors and the weights of the
+ * edges which connect them to the current node
+ * @param ProcessPath A function that takes the state of the algo for any
+ * neccessary processing. Called every time the algo moves to a new node
+ * @param EndCondition An optional function that is called every time the algo
+ * moves to a new node. If true, the search ends.
+ */
+template <typename NodeType>
+ExDijkstraState<NodeType> ExtendedDijkstra(
+  const NodeType& start_node,
+  const std::function<std::map<NodeType, int>(const ExDijkstraState<NodeType>& state)>& GetNeighbors,
+  const std::function<void(const ExDijkstraState<NodeType>& state)>& ProcessPath = [](const ExDijkstraState<NodeType>& state) {},
+  const std::function<bool(const ExDijkstraState<NodeType>& state)>& EndCondition = [](const ExDijkstraState<NodeType>& state) { return false; }
+) {
+
+  ExDijkstraState<NodeType> state;
+  state.curr_node = start_node;
+  auto& prev_nodes = state.prev_nodes;
+  auto& dists = state.dists;
+  auto& to_visit = state.to_visit;
+  
+  prev_nodes[start_node].insert(start_node);
+  dists[start_node] = 0;
+  to_visit.emplace(0, start_node);
+
+  while (!to_visit.empty()) {
+    auto [start_dist, curr_node] = to_visit.top();
+    state.curr_node = curr_node;
+    to_visit.pop();
+
+    ProcessPath(state);
+    
+    if (EndCondition(state)) {
+      return state;
+    }
+
+    for (const auto& [neighbor, edge_dist] : GetNeighbors(state)) {
+      // Add neighbor if it is not in dists map (aka distance of infinity)
+      // or if new calculated dist is less than the dist in the dists map.
+      int new_dist = start_dist + edge_dist;
+      if (!dists.count(neighbor) || new_dist < dists[neighbor]) {
+        dists[neighbor] = new_dist;
+        prev_nodes[neighbor] = {curr_node};
+        to_visit.emplace(new_dist, neighbor);
+      } else if (new_dist == dists[neighbor]) {
+        prev_nodes[neighbor].insert(curr_node);
+      }
+    }
+  }
+  return state;
 }
 
 // Structure to represent a simple grid with barriers and a moveable player 
