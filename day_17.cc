@@ -1,5 +1,7 @@
 #include "utils.h"
 
+using llong = long long;
+
 struct Computer {
 
   void SetProgram(std::vector<int> new_program) {
@@ -29,7 +31,7 @@ struct Computer {
   }
 
   void adv(int operand) {
-    A = A / std::pow(2, operand);
+    A = A >> operand;
   }
 
   void bxl(int operand) {
@@ -60,11 +62,11 @@ struct Computer {
   }
 
   void bdv(int operand) {
-    B = A / std::pow(2, operand);
+    B = A >> operand;
   }
 
   void cdv(int operand) {
-    C = A / std::pow(2, operand);
+    C = A >> operand;
   }
 
   void Run() {
@@ -138,14 +140,53 @@ Computer GetInfo() {
   return computer;
 }
 
+// This is specific for my input. But the same idea would work in general.
+// Each loop through my program removes the last 3 bits of A until there are
+// none left. Thus, we can work backwards and figure out which 3 bits to add
+// to A in order to generate the expected output
+void ReverseEngineer(llong a,
+                    std::vector<int> curr_out,
+                    const std::vector<int>& expected_out,
+                    std::vector<llong>* a_options) {
+  // Free up bottom 3 bits
+  a = a << 3;
+  // 3 bits has range 0 to 7
+  for (int i = 0; i < 8; ++i) {
+    llong new_a = a | i;  // Add i bits to a
+    // Generate the b and c values as my input does
+    llong b = i ^ 7;
+    llong c = new_a >> b;
+    b = (b ^ c ^ 4) % 8;
+    if (b == expected_out[curr_out.size()]) {
+      curr_out.push_back(b);
+      // If we have generated the currect output, add a to all options that work
+      // If not, continue building on a.
+      if (curr_out.size() == expected_out.size()) {
+        a_options->push_back(new_a);
+      } else {
+        ReverseEngineer(new_a, curr_out, expected_out, a_options);
+      }
+      // back track for other options
+      curr_out.pop_back();
+    }
+  }
+  // Only return once all paths have been explored
+  return;
+}
+
 std::string PartOne(Computer computer) {
   computer.Run();
   return computer.output;
 }
 
-int PartTwo(Computer computer) {
-  int answer = 0;
-  return answer;
+llong PartTwo(Computer computer) {
+  std::vector<int> reverse_program;
+  for (auto it = computer.program.rbegin(); it != computer.program.rend(); ++it) {
+    reverse_program.push_back(*it);
+  }
+  std::vector<llong> a_options;
+  ReverseEngineer(0, {}, reverse_program, &a_options);
+  return *std::min_element(a_options.begin(), a_options.end());
 }
 
 int main() {
@@ -156,7 +197,7 @@ int main() {
   std::string answer_one = PartOne(info);
   auto part_one_done = std::chrono::steady_clock::now();
 
-  int answer_two = PartTwo(info);
+  llong answer_two = PartTwo(info);
   auto part_two_done = std::chrono::steady_clock::now();
 
   std::cout << "Part One Answer: " << answer_one << std::endl;
