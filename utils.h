@@ -28,24 +28,24 @@
 namespace aoc {
 
 template<typename Iterable>
-void PrintIterable(Iterable iterable) {
-  if (std::size(iterable) == 0) {
-    return;
-  }
+std::string IterableString(Iterable iterable) {
+  std::string iterable_string;
   auto it = std::begin(iterable);
   auto it_end = std::end(iterable);
-  // Print first one so there will not be a leading or trailing comma.
-  std::cout << *it;
-  ++it;
+
   for ( ; it != it_end; ++it) {
-    std::cout << "," << *it;
+    if (!iterable_string.empty()) {
+      iterable_string += ',';
+    }
+    iterable_string += std::to_string(*it);
   }
-  std::cout << std::endl;
+  return iterable_string;
 }
 
 template<typename T>
-void PrintPair(std::pair<T, T> coord) {
-  std::cout << "(" << coord.first << "," << coord.second << ")" << std::endl;
+std::string PairString(std::pair<T, T> coord) {
+  std::string pair_string = "(" + std::to_string(coord.first) + "," + std::to_string(coord.second) + ")";
+  return pair_string;
 }
 
 // Split line into vector of string based on given delimiter
@@ -110,7 +110,7 @@ bool ExactRegexMatch(std::string input, std::string pattern);
  * Note that the algorithm will NEVER revisit nodes that are on the current path
  * to avoid cycles. However, when in a different path, it will visit already
  * visited nodes only if revisit_nodes is true. Defaults to false. This can be
- * used to walk all non-cyclic paths starting from start_node
+ * used to walk all paths in a DAG which start from the given start node.
  */
 template <typename NodeType>
 void BFS(
@@ -221,7 +221,8 @@ void DFSRecursive(
  * entire search, handle that in your implemenation of EndCondition.
  * @param revisit_nodes A flag for if the DFS algorithm should ever revisit
  * nodes that it visited in previous paths but NOT in the current path. Default
- * is false. Good for searching all paths in a tree
+ * is false. This can be used to walk all paths in a DAG which start from the 
+ * given start node.
  * @param allow_cycles A flag for if DFS algorithm should allow cycles. If true,
  * revisit_nodes is automatically set to true. Default is false.
  * @param depth An int only used if allow_cycles is true. Will stop searching
