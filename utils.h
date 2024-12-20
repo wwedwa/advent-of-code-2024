@@ -27,6 +27,27 @@
 
 namespace aoc {
 
+template<typename Iterable>
+void PrintIterable(Iterable iterable) {
+  if (std::size(iterable) == 0) {
+    return;
+  }
+  auto it = std::begin(iterable);
+  auto it_end = std::end(iterable);
+  // Print first one so there will not be a leading or trailing comma.
+  std::cout << *it;
+  ++it;
+  for ( ; it != it_end; ++it) {
+    std::cout << "," << *it;
+  }
+  std::cout << std::endl;
+}
+
+template<typename T>
+void PrintPair(std::pair<T, T> coord) {
+  std::cout << "(" << coord.first << "," << coord.second << ")" << std::endl;
+}
+
 // Split line into vector of string based on given delimiter
 std::vector<std::string> split(std::string line,
                   std::string delim=" ",
