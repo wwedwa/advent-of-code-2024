@@ -96,19 +96,21 @@ std::vector<Coord> GetSkips(const Maze& maze, const Coord& pos, int cheat_length
   return skips;
 }
 
-void GetPathAndDistances(const Maze& maze,
-                        const Coord& start,
-                        const Coord& end,
-                        std::map<Coord, int>* dist_from_start,
-                        std::vector<Coord>* full_path) {
+void GetDistances(const Maze& maze,
+                  const Coord& start,
+                  const Coord& end,
+                  std::map<Coord, int>* dist_from_start) {
   int height = maze.size();
   int width = maze[0].size();
 
   Coord pos = start;
-  full_path->push_back(pos);
+  int depth = 0;
+
+  (*dist_from_start)[pos] = depth;
   Coord dir = {0, 1};
 
   while (pos != end) {
+    ++depth;
     // Flip the direction we just moved in and start rotating from there so that
     // we will not re-check the position we moved from
     dir.first = -dir.first;
@@ -122,8 +124,7 @@ void GetPathAndDistances(const Maze& maze,
       // Check position in direction of dir
       Coord new_pos = {pos.first + dir.first, pos.second + dir.second};
       if (IsOnMap(height, width, pos) && maze[new_pos.first][new_pos.second] == '.') {
-        full_path->push_back(new_pos);
-        (*dist_from_start)[new_pos] = full_path->size() - 1;
+        (*dist_from_start)[new_pos] = depth;
         pos = new_pos;  // Update pos
         break;  // After finding next step, break out of for loop
       }
@@ -134,14 +135,13 @@ void GetPathAndDistances(const Maze& maze,
 int PartOne(const Maze& maze, const Coord& start, const Coord& end) {
   int answer = 0;
   std::map<Coord, int> dist_from_start;
-  std::vector<Coord> full_path;
 
-  GetPathAndDistances(maze, start, end, &dist_from_start, &full_path);
+  GetDistances(maze, start, end, &dist_from_start);
 
-  for (const Coord& pos : full_path) {
+  for (auto [pos, dist] : dist_from_start) {
     for (const Coord& skip : GetSkips(maze, pos, 2)) {
       // Subtract 2 since a skip still takes 2 picoseconds
-      if (dist_from_start[skip] - dist_from_start[pos] - 2 >= 100) {
+      if (dist_from_start[skip] - dist - 2 >= 100) {
         ++answer;
       }
     }
@@ -153,15 +153,14 @@ int PartOne(const Maze& maze, const Coord& start, const Coord& end) {
 int PartTwo(const Maze& maze, const Coord& start, const Coord& end) {
   int answer = 0;
   std::map<Coord, int> dist_from_start;
-  std::vector<Coord> full_path;
 
-  GetPathAndDistances(maze, start, end, &dist_from_start, &full_path);
+  GetDistances(maze, start, end, &dist_from_start);
 
-  for (const Coord& pos : full_path) {
+  for (auto [pos, dist] : dist_from_start) {
     for (const Coord& skip : GetSkips(maze, pos, 20)) {
       // Subtract distance travelled during the skip to account for skip time
-      int dist = std::abs(pos.first - skip.first) + std::abs(pos.second - skip.second);
-      if (dist_from_start[skip] - dist_from_start[pos] - dist >= 100) {
+      int skip_dist = std::abs(pos.first - skip.first) + std::abs(pos.second - skip.second);
+      if (dist_from_start[skip] - dist - skip_dist >= 100) {
         ++answer;
       }
     }
