@@ -113,16 +113,9 @@ int PartOne(const Graph& graph, const std::vector<std::string>& nodes) {
 }
 
 std::string PartTwo(const Graph& graph, const std::vector<std::string>& nodes) {
-  std::string answer;
   std::unordered_set<std::string> max_clique = FindMaximumClique(graph, nodes);
   std::set<std::string> ordered_clique(max_clique.begin(), max_clique.end());
-  for (const std::string& node : ordered_clique) {
-    if (answer.size() > 0) {
-      answer += ',';
-    }
-    answer += node;
-  }
-  return answer;
+  return aoc::IterableString(ordered_clique);
 }
 
 int main() {
