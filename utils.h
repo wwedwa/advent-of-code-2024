@@ -29,6 +29,8 @@ namespace aoc {
 
 template<typename Iterable>
 std::string IterableString(Iterable iterable) {
+  using ValueType = typename Iterable::value_type;
+
   std::string iterable_string;
   auto it = std::begin(iterable);
   auto it_end = std::end(iterable);
@@ -37,14 +39,23 @@ std::string IterableString(Iterable iterable) {
     if (!iterable_string.empty()) {
       iterable_string += ',';
     }
-    iterable_string += std::to_string(*it);
+    if constexpr (std::is_same_v<ValueType, std::string>) {
+      iterable_string += *it;
+    } else {
+      iterable_string += std::to_string(*it);
+    }
   }
   return iterable_string;
 }
 
 template<typename T>
 std::string PairString(std::pair<T, T> coord) {
-  std::string pair_string = "(" + std::to_string(coord.first) + "," + std::to_string(coord.second) + ")";
+  std::string pair_string;
+  if constexpr (std::is_same_v<T, std::string>) {
+    pair_string = "(" + coord.first + "," + coord.second + ")";
+  } else {
+    pair_string = "(" + std::to_string(coord.first) + "," + std::to_string(coord.second) + ")";
+  }
   return pair_string;
 }
 
