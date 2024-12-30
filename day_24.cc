@@ -24,6 +24,28 @@ Infoformat GetInfo() {
   return info;
 }
 
+std::vector<std::string> ReverseEngineer(const Gates& gates, std::string wire) {
+  std::vector<std::string> full_equation{wire};
+  bool done = false;
+
+  while (!done) {
+    done = true;
+    for (auto it = full_equation.begin(); it != full_equation.end(); ++it) {
+      wire = *it;
+      if (wire == "AND" || wire == "OR" || wire == "XOR" || wire[0] == 'x' || wire[0] == 'y') {
+        continue;
+      }
+      done = false;
+      it = full_equation.erase(it);
+      std::vector<std::string> gate = gates.at(wire);
+      it = full_equation.insert(it, gate.begin(), gate.end());
+      --it;  // Move iterator back so ++it moves it forward as expected
+    }
+  }
+
+  return full_equation;
+}
+
 ullong PartOne(WireVals wires, const Gates& gates) {
   ullong answer = 0;
   bool done = false;
@@ -52,8 +74,31 @@ ullong PartOne(WireVals wires, const Gates& gates) {
   return answer;
 }
 
+bool CheckExpansion(const std::vector<std::string>& expansion, int bit_pos) {
+  for (std::string wire : expansion) {
+    if (wire == "AND" || wire == "OR" || wire == "XOR") {
+      continue;
+    }
+    if (std::stoi(wire.substr(1)) > bit_pos) {
+      return false;
+    }
+  }
+  return true;
+}
+
 int PartTwo(const WireVals& info, const Gates& gates) {
   int answer = 0;
+  // Checks all zs (z00 to z45)
+  for (int i = 0; i < 46; ++i) {
+    std::string wire = "z";
+    if (i < 10) {
+      wire += '0';
+    }
+    wire += std::to_string(i);
+    if (!CheckExpansion(ReverseEngineer(gates, wire), i)) {
+      std::cout << wire << " is broken" << std::endl;
+    }
+  }
   return answer;
 }
 
