@@ -55,27 +55,47 @@ ullong PartOne(WireVals wires, const Gates& gates) {
 // Given a wire and gate type, it'll find the output wire if such a gate exists
 // If none exists, return empty string
 std::string FindMatchingGate(const Gates& gates, std::string wire, std::string gate_type) {
-for (auto [key, val] : gates) {
-  if (val[1] == gate_type && (val[0] == wire || val[1] == wire)) {
-    return key;
+  for (auto [key, val] : gates) {
+    if (val[1] == gate_type && (val[0] == wire || val[2] == wire)) {
+      return key;
+    }
   }
   return "";
 }
 
 // The circuit should be a ripple carry adder. So, just check if each input
 // goes to the proper gates, and each gate output also goes to the proper gates.
-// If there are gates which don't, return their names
+// If there are gates which don't, return their names.
+// THIS METHOD IS NOT GUARANTEED TO WORK FOR ANY GENERAL OUTPUT. But it works for mine
+// I just kept adding checks until I got 8 wrong wires
+// Reference diagram: https://www.build-electronic-circuits.com/full-adder/
 std::vector<std::string> FindWrongGates(const Gates& gates, std::string x_wire) {
   std::vector<std::string> wrong_gates;
+  // We can always find these since it's only the outputs which are swapped
   std::string xor_gate1 = FindMatchingGate(gates, x_wire, "XOR");
   std::string and_gate1 = FindMatchingGate(gates, x_wire, "AND");
 
-  // In a full adder curcuit, the output of the first XOR gate goes to an
-  // XOR and an AND gate.
+  // In a full adder curcuit, the output of the first XOR gate goes to a
+  // second XOR and an AND gate. The second XOR gate will go to an output bit
   std::string xor_gate2 = FindMatchingGate(gates, xor_gate1, "XOR");
   std::string and_gate2 = FindMatchingGate(gates, xor_gate1, "AND");
-  if (xor_gate2 == "" || and_gate2 == "") {
+
+  // If the first XOR gate does NOT go to another XOR gate and an AND gate,
+  // then this first XOR gate is wrong
+  if (xor_gate2 == "" || 
+      and_gate2 == "") {
     wrong_gates.push_back(xor_gate1);
+  }
+
+  // xor_gate2 should be an output bit and it's bit number should match
+  // the input's bit number
+  if (xor_gate2 != "" && xor_gate2.substr(1) != x_wire.substr(1)) {
+    wrong_gates.push_back(xor_gate2);
+  }
+
+  // and_gate2 should NOT be an output bit
+  if (and_gate2 != "" && and_gate2[0] == 'z') {
+    wrong_gates.push_back(and_gate2);
   }
 
   // In a full adder curcuit, the output of the first AND gate goes to an OR gate.
@@ -83,18 +103,38 @@ std::vector<std::string> FindWrongGates(const Gates& gates, std::string x_wire) 
   if (or_gate1 == "") {
     wrong_gates.push_back(and_gate1);
   } else {
-    // The OR gate then should go to an XOR gate
-    std::string xor_gate3 = FindMatchingGate(gates, or_gate1, "OR");
-    if (xor_gate3 == "") {
-      wrong_gates.push_back(xor_gate3);
+    // The OR gate then should go to an XOR gate and an AND gate
+    std::string xor_gate3 = FindMatchingGate(gates, or_gate1, "XOR");
+    std::string and_gate3 = FindMatchingGate(gates, or_gate1, "AND");
+    if (xor_gate3 == "" ||
+        and_gate3 == "") {
+      wrong_gates.push_back(or_gate1);
     }
   }
   return wrong_gates;
 }
 
-int PartTwo(const WireVals& info, const Gates& gates) {
-  int answer = 0;
-
+std::string PartTwo(const WireVals& info, const Gates& gates) {
+  std::string answer;
+  std::set<std::string> ordered_wrong_wires;
+  for (int i = 1; i < 44; ++i) {
+    std::string x_wire = "x";
+    if (i < 10) {
+      x_wire += "0";
+    }
+    x_wire += std::to_string(i);
+    std::vector<std::string> wrong_wires = FindWrongGates(gates, x_wire);
+    for (const std::string& wire : wrong_wires) {
+      ordered_wrong_wires.insert(wire);
+    }
+  }
+  
+  for (const std::string& wire : ordered_wrong_wires) {
+    if (answer.size() > 0) {
+      answer += ",";
+    }
+    answer += wire;
+  }
   return answer;
 }
 
@@ -106,7 +146,7 @@ int main() {
   ullong answer_one = PartOne(info.first, info.second);
   auto part_one_done = std::chrono::steady_clock::now();
 
-  int answer_two = PartTwo(info.first, info.second);
+  std::string answer_two = PartTwo(info.first, info.second);
   auto part_two_done = std::chrono::steady_clock::now();
 
   std::cout << "Part One Answer: " << answer_one << std::endl;
