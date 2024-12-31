@@ -113,6 +113,9 @@ void InitiateOneStepCache() {
   }
 }
 
+// Idea: count the number of step types in each path. Then when expanding a 
+// path for the next robot, expand each step and count the resulting steps
+// (A step is two buttons, a starting button and ending button like 02, vv, etc)
 ullong GetShortestPathLength(int depth,
                             std::unordered_map<std::string, ullong> step_count,
                             const std::unordered_map<char, Coord>& keypad) {

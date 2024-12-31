@@ -24,28 +24,6 @@ Infoformat GetInfo() {
   return info;
 }
 
-std::vector<std::string> ReverseEngineer(const Gates& gates, std::string wire) {
-  std::vector<std::string> full_equation{wire};
-  bool done = false;
-
-  while (!done) {
-    done = true;
-    for (auto it = full_equation.begin(); it != full_equation.end(); ++it) {
-      wire = *it;
-      if (wire == "AND" || wire == "OR" || wire == "XOR" || wire[0] == 'x' || wire[0] == 'y') {
-        continue;
-      }
-      done = false;
-      it = full_equation.erase(it);
-      std::vector<std::string> gate = gates.at(wire);
-      it = full_equation.insert(it, gate.begin(), gate.end());
-      --it;  // Move iterator back so ++it moves it forward as expected
-    }
-  }
-
-  return full_equation;
-}
-
 ullong PartOne(WireVals wires, const Gates& gates) {
   ullong answer = 0;
   bool done = false;
@@ -54,7 +32,7 @@ ullong PartOne(WireVals wires, const Gates& gates) {
     for (auto [out, gate] : gates) {
       if (!wires.count(gate[0]) || !wires.count(gate[2])) {
         done = (out[0] == 'z') ? false : done;  // If one of the inputs is unknown and the resulting wire
-                                                    // is one of the z wires, we are not done
+                                                // is one of the z wires, we are not done
         continue;
       }
       if (gate[1] == "AND") wires[out] = wires[gate[0]] && wires[gate[2]];
@@ -74,31 +52,49 @@ ullong PartOne(WireVals wires, const Gates& gates) {
   return answer;
 }
 
-bool CheckExpansion(const std::vector<std::string>& expansion, int bit_pos) {
-  for (std::string wire : expansion) {
-    if (wire == "AND" || wire == "OR" || wire == "XOR") {
-      continue;
-    }
-    if (std::stoi(wire.substr(1)) > bit_pos) {
-      return false;
+// Given a wire and gate type, it'll find the output wire if such a gate exists
+// If none exists, return empty string
+std::string FindMatchingGate(const Gates& gates, std::string wire, std::string gate_type) {
+for (auto [key, val] : gates) {
+  if (val[1] == gate_type && (val[0] == wire || val[1] == wire)) {
+    return key;
+  }
+  return "";
+}
+
+// The circuit should be a ripple carry adder. So, just check if each input
+// goes to the proper gates, and each gate output also goes to the proper gates.
+// If there are gates which don't, return their names
+std::vector<std::string> FindWrongGates(const Gates& gates, std::string x_wire) {
+  std::vector<std::string> wrong_gates;
+  std::string xor_gate1 = FindMatchingGate(gates, x_wire, "XOR");
+  std::string and_gate1 = FindMatchingGate(gates, x_wire, "AND");
+
+  // In a full adder curcuit, the output of the first XOR gate goes to an
+  // XOR and an AND gate.
+  std::string xor_gate2 = FindMatchingGate(gates, xor_gate1, "XOR");
+  std::string and_gate2 = FindMatchingGate(gates, xor_gate1, "AND");
+  if (xor_gate2 == "" || and_gate2 == "") {
+    wrong_gates.push_back(xor_gate1);
+  }
+
+  // In a full adder curcuit, the output of the first AND gate goes to an OR gate.
+  std::string or_gate1 = FindMatchingGate(gates, and_gate1, "OR");
+  if (or_gate1 == "") {
+    wrong_gates.push_back(and_gate1);
+  } else {
+    // The OR gate then should go to an XOR gate
+    std::string xor_gate3 = FindMatchingGate(gates, or_gate1, "OR");
+    if (xor_gate3 == "") {
+      wrong_gates.push_back(xor_gate3);
     }
   }
-  return true;
+  return wrong_gates;
 }
 
 int PartTwo(const WireVals& info, const Gates& gates) {
   int answer = 0;
-  // Checks all zs (z00 to z45)
-  for (int i = 0; i < 46; ++i) {
-    std::string wire = "z";
-    if (i < 10) {
-      wire += '0';
-    }
-    wire += std::to_string(i);
-    if (!CheckExpansion(ReverseEngineer(gates, wire), i)) {
-      std::cout << wire << " is broken" << std::endl;
-    }
-  }
+
   return answer;
 }
 
