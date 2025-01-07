@@ -32,8 +32,44 @@ ullong PartOne(Infoformat& info) {
   return answer;
 }
 
+void ShiftArray(std::array<int, 4>* arr, int new_elem) {
+  for (int i = 0; i < 3; ++i) {
+    (*arr)[i] = (*arr)[i + 1];
+  }
+  (*arr)[3] = new_elem;
+}
+
 int PartTwo(Infoformat& info) {
   int answer = 0;
+  std::map<std::array<int, 4>, int> banana_count;
+  std::array<int, 4> price_changes;
+
+  for (int num : info) {
+    int old_num = num;
+    std::set<std::array<int, 4>> already_found;
+    for (int i = 0; i < 2000; ++i) {
+      num = GetNextNumber(num);
+      int change = (num % 10) - (old_num % 10);
+      old_num = num;
+      if (i < 4) {
+        // We need to get 4 changes before we do anything else
+        price_changes[i] = change;
+      } else {
+        // If we already have 4 changes, shift array to include the new change
+        ShiftArray(&price_changes, change);
+      }
+      if (i >= 3) {
+        // Once we have 4 changes, start keeping track of them 
+        if (!already_found.count(price_changes)) {
+          already_found.insert(price_changes);
+          banana_count[price_changes] += num % 10;
+          if (answer < banana_count[price_changes]) {
+            answer = banana_count[price_changes];
+          }
+        }
+      }
+    }
+  }
   return answer;
 }
 
