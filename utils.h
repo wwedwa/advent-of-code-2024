@@ -89,7 +89,7 @@ long gcd(long a, long b);
 // Calculate lcm for a vector of ints
 long lcm(std::vector<int> nums);
 
-// Calculate a special mod
+// returns a (mod m) always in the range from 0 to m - 1
 int PosMod(int m, int n);
 
 // Find all instances of a regex pattern in the given string. Returned as strings
